@@ -1,6 +1,6 @@
-package org.example.domain.validation;
+package org.example.validation;
 
-import org.example.domain.validation.constraintvalidation.NotEmptyListValidator;
+import org.example.validation.constraintvalidation.NotEmptyListValidator;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
