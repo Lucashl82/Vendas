@@ -1,5 +1,7 @@
 package org.example;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.example.domain.entity.Usuario;
@@ -9,6 +11,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -36,12 +39,42 @@ public class JwtService {
                 .compact();
     }
 
+    private Claims obterClaims (String token) throws ExpiredJwtException {
+        return Jwts
+                .parser()
+                .setSigningKey(chaveAssinatura)
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public boolean tokenValido(String token){
+        try {
+            Claims claims = obterClaims(token);
+            Date dataExpiracao = claims.getExpiration();
+            LocalDateTime data =
+                    dataExpiracao.toInstant()
+                            .atZone(ZoneId.systemDefault()).toLocalDateTime();
+            return !LocalDateTime.now().isAfter(data);
+
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    public String obterLoginUsuario(String token) throws ExpiredJwtException{
+        return (String) obterClaims(token).getSubject();
+    }
+
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(VendasApplication.class);
         JwtService service = context.getBean(JwtService.class);
-        Usuario user = Usuario.builder().login("Fulano").build();
+        Usuario user = Usuario.builder().login("fulano").build();
         String token = service.gerarToken(user);
         System.out.println(token);
+
+        boolean isTokenValido = service.tokenValido(token);
+        System.out.println("O token está válido? " + isTokenValido);
+        System.out.println(service.obterLoginUsuario(token));
 
     }
 }
